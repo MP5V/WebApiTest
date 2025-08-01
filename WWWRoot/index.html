@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>METANIT.COM</title>
+    <style>
+        td {
+            padding: 5px;
+        }
+
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Список Задач</h2>
+    <div>
+        <input type="hidden" id="Id" />
+        <p>
+            Задача<br />
+            <input id="Title" />
+        </p>
+        <p>
+            Выполнено:<br />
+            <input id="IsCompleted" type="checkbox" />
+        </p>
+        <p>
+            <button id="saveBtn">Сохранить</button>
+            <button id="resetBtn">Сбросить</button>
+        </p>
+    </div>
+    <table>
+        <thead><tr><th>Задача</th><th>Выполнено</th><th></th></tr></thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+    // Получение всех задач
+        async function getToDos() {
+            // отправляет запрос и получаем ответ
+            const response = await fetch("/api/todo", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok === true) {
+                // получаем данные
+                const todo = await response.json();
+                const rows = document.querySelector("tbody");
+                // добавляем полученные элементы в таблицу
+                todo.forEach(todo => rows.append(row(todo)));
+            }
+        }
+        // Получение одной задачи
+        async function getToDo(id) {
+            const response = await fetch(`/api/todo/${id}`, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const todo = await response.json();
+                document.getElementById("Id").value = todo.id;
+                document.getElementById("Title").value = todo.title;
+                document.getElementById("IsCompleted").checked = todo.isCompleted;
+            }
+            else {
+                // если произошла ошибка, получаем сообщение об ошибке
+                const error = await response.json();
+                console.log(error.message); // и выводим его на консоль
+            }
+        }
+        // Добавление
+        async function createToDo(title, isCompleted) {
+
+            const response = await fetch("api/todo", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: title,
+                    isCompleted: isCompleted
+                })
+            });
+            if (response.ok === true) {
+                const todo = await response.json();
+                document.querySelector("tbody").append(row(todo));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        // Изменение
+        async function editToDo(id, title, isCompleted) {
+            const response = await fetch(`api/todo/${id}`, {  // <- id в URL
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: id,  // Можно убрать, сервер уже знает id из URL
+                    title: title,
+                    isCompleted: isCompleted
+                })
+            });
+            if (response.ok === true) {
+                // На сервере NoContent, тела нет — обновляем строку по id
+                const tr = document.querySelector(`tr[data-rowid='${id}']`);
+                if (tr) {
+                    tr.replaceWith(row({ id, title, isCompleted: isCompleted }));
+                }
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        // Удаление пользователя
+        async function deleteToDo(id) {
+            const response = await fetch(`/api/todo/${id}`, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const tr = document.querySelector(`tr[data-rowid='${id}']`);
+                if (tr) tr.remove();
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+        // сброс данных формы после отправки
+        function reset() {
+                document.getElementById("Id").value = "";
+                document.getElementById("Title").value = "";
+                document.getElementById("IsCompleted").checked = false;
+        }
+        // создание строки для таблицы
+        function row(todo) {
+            console.log(todo);
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", todo.id);
+
+            const titleTd = document.createElement("td");
+            titleTd.append(todo.title);
+            tr.append(titleTd);
+
+            const isCompletedTd = document.createElement("td");
+            isCompletedTd.append(todo.isCompleted ? "Да" : "Нет");
+            tr.append(isCompletedTd);
+
+            const linksTd = document.createElement("td");
+
+            const editLink = document.createElement("button");
+            editLink.append("Изменить");
+            editLink.addEventListener("click", async() => await getToDo(todo.id));
+            linksTd.append(editLink);
+
+            const removeLink = document.createElement("button");
+            removeLink.append("Удалить");
+            removeLink.addEventListener("click", async () => await deleteToDo(todo.id));
+
+            linksTd.append(removeLink);
+            tr.appendChild(linksTd);
+
+            return tr;
+        }
+        // сброс значений формы
+        document.getElementById("resetBtn").addEventListener("click", () =>  reset());
+
+        // отправка формы
+        document.getElementById("saveBtn").addEventListener("click", async () => {
+
+            const Id = document.getElementById("Id").value;
+            const Title = document.getElementById("Title").value;
+            const IsCompleted = document.getElementById("IsCompleted").checked;
+            if (Id === "")
+                await createToDo(Title, IsCompleted);
+            else
+                await editToDo(Id, Title, IsCompleted);
+            reset();
+        });
+
+        // загрузка пользователей
+        getToDos();
+    </script>
+</body>
+</html>
