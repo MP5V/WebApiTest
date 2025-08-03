@@ -1,43 +1,173 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
+    <title>Список пользователей</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <meta charset="utf-8" />
-    <title>METANIT.COM</title>
     <style>
-        td {
-            padding: 5px;
+        * {
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
         }
 
-        button {
-            margin: 5px;
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: start;
+            min-height: 100vh;
         }
+
+        .container {
+            background: white;
+            margin-top: 50px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+            input[type="text"]:focus {
+                border-color: #4a90e2;
+            }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+        }
+
+            .checkbox input {
+                margin-right: 10px;
+            }
+
+        .buttons {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+            .buttons button {
+                padding: 10px 20px;
+                margin: 5px;
+                border: none;
+                border-radius: 8px;
+                background-color: #4a90e2;
+                color: white;
+                cursor: pointer;
+                font-weight: bold;
+                transition: background-color 0.3s;
+            }
+
+                .buttons button:hover {
+                    background-color: #357ab8;
+                }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f9f9f9;
+            font-weight: bold;
+        }
+
+        td:last-child button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            font-size: 0.9em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .edit-btn {
+            background-color: #ff9800;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+        }
+
+        .edit-btn:hover {
+            background-color: #e68900;
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+
     </style>
 </head>
 <body>
-    <h2>Список Задач</h2>
-    <div>
+    <div class="container">
+        <h1>Список пользователей</h1>
         <input type="hidden" id="Id" />
-        <p>
-            Задача<br />
-            <input id="Title" />
-        </p>
-        <p>
-            Выполнено:<br />
-            <input id="IsCompleted" type="checkbox" />
-        </p>
-        <p>
+        <div class="form-group">
+            <label for="Title">Пользователь</label>
+            <input type="text" id="Title" placeholder="Например: Иванов иван" />
+        </div>
+        <div class="form-group checkbox">
+            <input type="checkbox" id="IsCompleted" />
+            <label for="IsCompleted">Есть мем</label>
+        </div>
+        <div class="buttons">
             <button id="saveBtn">Сохранить</button>
-            <button id="resetBtn">Сбросить</button>
-        </p>
+            <button id="resetBtn" style="background-color: #777;">Сбросить</button>
+
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Статус мема</th>
+                    <th>Действия</th>
+                    <th>Мем</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <img id="imageView" style="display:none; margin-top: 20px; max-width: 100%; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" alt="Аватар" />
     </div>
-    <table>
-        <thead><tr><th>Задача</th><th>Выполнено</th><th></th></tr></thead>
-        <tbody>
-        </tbody>
-    </table>
+
 
     <script>
-    // Получение всех задач
+        // Получение всех задач
         async function getToDos() {
             // отправляет запрос и получаем ответ
             const response = await fetch("/api/todo", {
@@ -130,11 +260,32 @@
             }
         }
 
-        // сброс данных формы после отправки
+        async function getImage(fileName) {
+            const image = document.getElementById("imageView");
+            if (!fileName) {
+                console.log("Имя файла не указано");
+                return;
+            }
+
+            const response = await fetch(`/api/image/${fileName}`);
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob); 
+
+                image.src = imageUrl;
+                image.style.display = "block";
+            } else {
+                console.log("Ошибка загрузки изображения");
+                image.style.display = "none";
+            }
+
+        }
+
         function reset() {
-                document.getElementById("Id").value = "";
-                document.getElementById("Title").value = "";
-                document.getElementById("IsCompleted").checked = false;
+            document.getElementById("Id").value = "";
+            document.getElementById("Title").value = "";
+            document.getElementById("IsCompleted").checked = false;
         }
         // создание строки для таблицы
         function row(todo) {
@@ -154,7 +305,7 @@
 
             const editLink = document.createElement("button");
             editLink.append("Изменить");
-            editLink.addEventListener("click", async() => await getToDo(todo.id));
+            editLink.addEventListener("click", async () => await getToDo(todo.id));
             linksTd.append(editLink);
 
             const removeLink = document.createElement("button");
@@ -164,10 +315,17 @@
             linksTd.append(removeLink);
             tr.appendChild(linksTd);
 
+            const Memtd = document.createElement("td");
+
+            const avatarButton = document.createElement("button");
+            avatarButton.append("Посмотреть аватар");
+            avatarButton.addEventListener("click", async () => await getImage(todo.imageFileName));
+            Memtd.append(avatarButton);
+            tr.appendChild(Memtd);
             return tr;
         }
         // сброс значений формы
-        document.getElementById("resetBtn").addEventListener("click", () =>  reset());
+        document.getElementById("resetBtn").addEventListener("click", () => reset());
 
         // отправка формы
         document.getElementById("saveBtn").addEventListener("click", async () => {

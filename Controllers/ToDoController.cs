@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebApiTest.Models;
+using System.IO;
 
 namespace WebApiTest.Controllers
 {
@@ -9,7 +10,7 @@ namespace WebApiTest.Controllers
     {
         private static List<ToDoItems> _items = new List<ToDoItems>
         {
-            new ToDoItems { Id = 1, Title = "Пример задачи", IsCompleted = false }
+            new ToDoItems { Id = 1, Title = "Пример задачи", IsCompleted = false, ImageFileName = "аыаыа.jpg"}
         };
 
         [HttpGet]
@@ -20,7 +21,7 @@ namespace WebApiTest.Controllers
         {
             var item = _items.FirstOrDefault(i => i.Id == id);
             return item == null ? NotFound() : Ok(item);
-        }
+        }   
 
         [HttpPost]
         public ActionResult<ToDoItems> Create(ToDoItems item)
@@ -50,6 +51,24 @@ namespace WebApiTest.Controllers
 
             _items.Remove(item);
             return NoContent();
+        }
+    }
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ImageController : ControllerBase
+    {
+        [HttpGet("{fileName}")]
+        public IActionResult GetImage(string fileName)
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "image", fileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var contentType = "image/png"; // или определить по расширению
+            var bytes = System.IO.File.ReadAllBytes(filePath);
+            return File(bytes, contentType);
         }
     }
 }
