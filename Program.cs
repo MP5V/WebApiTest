@@ -1,4 +1,6 @@
 
+using WebApiTest.Repository;
+
 namespace WebApiTest
 {
     public class Program
@@ -7,28 +9,24 @@ namespace WebApiTest
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Регистрируем сервисы ДО вызова Build()
+            builder.Services.AddTransient<DataBaseConnection>();
+            builder.Services.AddTransient<ImageRepository>();
 
+            // Добавляем контроллеры и другие сервисы
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            //builder.Services.AddSwaggerGen();
+            // builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            /*if (app.Environment.IsDevelopment())
-            {
-                //app.UseSwagger();
-                //app.UseSwaggerUI();
-            }*/
-            app.UseDefaultFiles();   // для автоматического открытия index.html
-            app.UseStaticFiles();    // чтобы отдавать статические файлы из wwwroot
+            // Конфигурируем middleware
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

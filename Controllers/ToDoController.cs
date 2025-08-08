@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebApiTest.Models;
 using System.IO;
+using WebApiTest.Repository;
 
 namespace WebApiTest.Controllers
 {
@@ -8,67 +9,58 @@ namespace WebApiTest.Controllers
     [Route("api/[controller]")]
     public class ToDoController : ControllerBase
     {
-        private static List<ToDoItems> _items = new List<ToDoItems>
+        /*private static List<ToDoItems> _items = new List<ToDoItems>
         {
             new ToDoItems { Id = 1, Title = "Пример задачи", IsCompleted = false, ImageFileName = "аыаыа.jpg"}
-        };
+        };*/
+
+        private readonly ToDoRepository _repository;
+
+        public ToDoController()
+        {
+            _repository = new ToDoRepository();
+        }
 
         [HttpGet]
-        public ActionResult<IEnumerable<ToDoItems>> GetAll() => Ok(_items);
+        public ActionResult<IEnumerable<ToDoItems>> GetAll()
+        {
+            var items = _repository.GetAll();
+            return Ok(items);
+        }
 
         [HttpGet("{id}")]
         public ActionResult<ToDoItems> GetById(int id)
         {
-            var item = _items.FirstOrDefault(i => i.Id == id);
+            var item = _repository.GetById(id);
             return item == null ? NotFound() : Ok(item);
         }   
 
         [HttpPost]
         public ActionResult<ToDoItems> Create(ToDoItems item)
         {
-            item.Id = _items.Any() ? _items.Max(i => i.Id) + 1 : 1;
-            _items.Add(item);
+            _repository.Create(item);
             return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(int id, ToDoItems updatedItem)
         {
-            var item = _items.FirstOrDefault(i => i.Id == id);
+            var item = _repository.GetById(id);
             if (item == null) return NotFound();
 
-            item.Title = updatedItem.Title;
-            item.IsCompleted = updatedItem.IsCompleted;
-
+            updatedItem.Id = item.Id;
+            _repository.Update(updatedItem);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var item = _items.FirstOrDefault(i => i.Id == id);
+            var item = _repository.GetById(id);
             if (item == null) return NotFound();
 
-            _items.Remove(item);
+            _repository.Delete(id);
             return NoContent();
-        }
-    }
-
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ImageController : ControllerBase
-    {
-        [HttpGet("{fileName}")]
-        public IActionResult GetImage(string fileName)
-        {
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "image", fileName);
-
-            if (!System.IO.File.Exists(filePath))
-                return NotFound();
-
-            var contentType = "image/png"; // или определить по расширению
-            var bytes = System.IO.File.ReadAllBytes(filePath);
-            return File(bytes, contentType);
         }
     }
 }

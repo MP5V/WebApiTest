@@ -162,6 +162,14 @@
             <tbody>
             </tbody>
         </table>
+        <div class="form-group">
+            <label for="ImageFile">Выбрать изображение</label>
+            <input type="file" id="ImageFile" accept="image/*" />
+        </div>
+        <div class="buttons">
+            <button id="uploadImageBtn" style="background-color: #28a745;">Загрузить изображение</button>
+        </div>
+        <input type="hidden" id="ImageFileName" />
         <img id="imageView" style="display:none; margin-top: 20px; max-width: 100%; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" alt="Аватар" />
     </div>
 
@@ -202,44 +210,42 @@
             }
         }
         // Добавление
-        async function createToDo(title, isCompleted) {
-
+        async function createToDo(title, isCompleted, imageFileName) {
             const response = await fetch("api/todo", {
                 method: "POST",
                 headers: { "Accept": "application/json", "Content-Type": "application/json" },
                 body: JSON.stringify({
                     title: title,
-                    isCompleted: isCompleted
+                    isCompleted: isCompleted,
+                    imageFileName: imageFileName
                 })
             });
             if (response.ok === true) {
                 const todo = await response.json();
                 document.querySelector("tbody").append(row(todo));
-            }
-            else {
+            } else {
                 const error = await response.json();
                 console.log(error.message);
             }
         }
-        // Изменение
-        async function editToDo(id, title, isCompleted) {
-            const response = await fetch(`api/todo/${id}`, {  // <- id в URL
+
+        async function editToDo(id, title, isCompleted, imageFileName) {
+            const response = await fetch(`api/todo/${id}`, {
                 method: "PUT",
                 headers: { "Accept": "application/json", "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    id: id,  // Можно убрать, сервер уже знает id из URL
+                    id: id,
                     title: title,
-                    isCompleted: isCompleted
+                    isCompleted: isCompleted,
+                    imageFileName: imageFileName
                 })
             });
             if (response.ok === true) {
-                // На сервере NoContent, тела нет — обновляем строку по id
                 const tr = document.querySelector(`tr[data-rowid='${id}']`);
                 if (tr) {
-                    tr.replaceWith(row({ id, title, isCompleted: isCompleted }));
+                    tr.replaceWith(row({ id, title, isCompleted: isCompleted, imageFileName }));
                 }
-            }
-            else {
+            } else {
                 const error = await response.json();
                 console.log(error.message);
             }
@@ -279,13 +285,51 @@
                 console.log("Ошибка загрузки изображения");
                 image.style.display = "none";
             }
-
         }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById("ImageFile");
+            if (fileInput.files.length === 0) {
+                alert("Выберите файл для загрузки");
+                return null;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch("/api/image/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert("Изображение загружено: " + result.fileName);
+                return result.fileName; // возвращаем имя файла
+            } else {
+                alert("Ошибка загрузки изображения");
+                return null;
+            }
+        }
+
+        document.getElementById("uploadImageBtn").addEventListener("click", async (e) => {
+            e.preventDefault();
+            const fileName = await uploadImage();
+            if (fileName) {
+                // Можно сразу записать в скрытое поле или переменную для последующего сохранения
+                document.getElementById("ImageFileName").value = fileName;
+            }
+        });
 
         function reset() {
             document.getElementById("Id").value = "";
             document.getElementById("Title").value = "";
             document.getElementById("IsCompleted").checked = false;
+            document.getElementById("ImageFileName").value = "";
+            document.getElementById("ImageFile").value = "";
+            document.getElementById("imageView").style.display = "none";
+
         }
         // создание строки для таблицы
         function row(todo) {
@@ -333,10 +377,13 @@
             const Id = document.getElementById("Id").value;
             const Title = document.getElementById("Title").value;
             const IsCompleted = document.getElementById("IsCompleted").checked;
+            const ImageFileName = document.getElementById("ImageFileName").value;
+
             if (Id === "")
-                await createToDo(Title, IsCompleted);
+                await createToDo(Title, IsCompleted, ImageFileName);
             else
-                await editToDo(Id, Title, IsCompleted);
+                await editToDo(Id, Title, IsCompleted, ImageFileName);
+
             reset();
         });
 
