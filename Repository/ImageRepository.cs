@@ -32,11 +32,11 @@ namespace WebApiTest.Repository
             return File.Exists(GetImagePath(fileName));
         }
 
-        public void SaveImage(byte[] imageBytes, string fileName)
+        public async Task SaveImage(byte[] imageBytes, string fileName)
         {
-            File.WriteAllBytes(GetImagePath(fileName), imageBytes);
+            await File.WriteAllBytesAsync(GetImagePath(fileName), imageBytes);
         }
-
+        
         public void DeleteImage(string fileName)
         {
             var path = GetImagePath(fileName);

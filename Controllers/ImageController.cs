@@ -57,7 +57,7 @@ namespace WebApiTest.Controllers
                 {
                     await file.CopyToAsync(ms);
                     var bytes = ms.ToArray();
-                    _imageRepo.SaveImage(bytes, uniqueFileName);
+                    await _imageRepo.SaveImage(bytes, uniqueFileName);
                 }
             }
             catch

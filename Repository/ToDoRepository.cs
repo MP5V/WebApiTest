@@ -17,42 +17,42 @@ namespace WebApiTest.Repository
             _db = new DataBaseConnection();
         }
 
-        public IEnumerable<ToDoItems> GetAll()
+        public async Task<IEnumerable<ToDoItems>> GetAll()
         {
             using var connection = _db.GetConnection();
-            connection.Open();
-            return connection.Query<ToDoItems>("SELECT * FROM todo_items");
+            var items = await connection.QueryAsync<ToDoItems>("SELECT * FROM todo_items");
+            return items;
         }
 
-        public ToDoItems GetById(int id)
+        public async Task<ToDoItems> GetById(int id)
         {
             using var connection = _db.GetConnection();
-            connection.Open();
-            return connection.QueryFirstOrDefault<ToDoItems>("SELECT * FROM todo_items WHERE Id = @Id", new {Id = id});
+            //connection.Open();
+            return await connection.QueryFirstOrDefaultAsync<ToDoItems>("SELECT * FROM todo_items WHERE Id = @Id", new {Id = id});
         }
 
-        public void Create(ToDoItems item)
+        public async Task Create(ToDoItems item)
         {
             using var connection = _db.GetConnection();
-            connection.Open();
+            //connection.Open();
             var createQiery = "INSERT INTO todo_items (title, iscompleted, imagefilename) VALUES (@Title, @IsCompleted, @ImageFileName)";
-            connection.Execute(createQiery, item);
+            await connection.ExecuteAsync(createQiery, item);
         }
 
-        public void Update(ToDoItems item)
+        public async Task Update(ToDoItems item)
         {
             using var connection = _db.GetConnection();
-            connection.Open();
+           // connection.Open();
             var updateQuery = "UPDATE todo_items SET title = @Title, iscompleted = @IsCompleted, imagefilename = @ImageFileName WHERE id = @Id";
-            connection.Execute(updateQuery, item);
+            await connection.ExecuteAsync(updateQuery, item);
         }
 
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
             using var connection = _db.GetConnection();
-            connection.Open();
+            //connection.Open();
             var deleteQuery = "DELETE FROM todo_items where id = @Id";
-            connection.Execute(deleteQuery, new { Id = id });
+            await connection.ExecuteAsync(deleteQuery, new { Id = id });
         }
     }
 }
