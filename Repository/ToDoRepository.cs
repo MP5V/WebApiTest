@@ -1,58 +1,56 @@
-﻿using Dapper;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using WebApiTest.Models;
 using WebApiTest.Repository;
-using WebApiTest.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+//using System.Data.Entity;
 
 namespace WebApiTest.Repository
 {
     public class ToDoRepository
     {
-        private readonly DataBaseConnection _db;
+        private readonly AppDbContext _context;
 
-        public ToDoRepository()
+        public ToDoRepository(AppDbContext context)
         {
-            _db = new DataBaseConnection();
+            _context = context;
         }
 
         public async Task<IEnumerable<ToDoItems>> GetAll()
         {
-            using var connection = _db.GetConnection();
-            var items = await connection.QueryAsync<ToDoItems>("SELECT * FROM todo_items");
-            return items;
+            return await _context.ToDoItems.ToListAsync();
         }
 
-        public async Task<ToDoItems> GetById(int id)
+        public async Task<ToDoItems?> GetById(int id)
         {
-            using var connection = _db.GetConnection();
-            //connection.Open();
-            return await connection.QueryFirstOrDefaultAsync<ToDoItems>("SELECT * FROM todo_items WHERE Id = @Id", new {Id = id});
+            return await _context.ToDoItems.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task Create(ToDoItems item)
         {
-            using var connection = _db.GetConnection();
-            //connection.Open();
-            var createQiery = "INSERT INTO todo_items (title, iscompleted, imagefilename) VALUES (@Title, @IsCompleted, @ImageFileName)";
-            await connection.ExecuteAsync(createQiery, item);
+            _context.ToDoItems.Add(item);
+            await _context.SaveChangesAsync();
         }
 
         public async Task Update(ToDoItems item)
         {
-            using var connection = _db.GetConnection();
-           // connection.Open();
-            var updateQuery = "UPDATE todo_items SET title = @Title, iscompleted = @IsCompleted, imagefilename = @ImageFileName WHERE id = @Id";
-            await connection.ExecuteAsync(updateQuery, item);
+            var existing = await _context.ToDoItems.FindAsync(item.Id);
+            if (existing != null)
+            {
+                _context.Entry(existing).CurrentValues.SetValues(item);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task Delete(int id)
         {
-            using var connection = _db.GetConnection();
-            //connection.Open();
-            var deleteQuery = "DELETE FROM todo_items where id = @Id";
-            await connection.ExecuteAsync(deleteQuery, new { Id = id });
+            var entity = await _context.ToDoItems.FindAsync(id);
+            if (entity != null)
+            {
+                _context.ToDoItems.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

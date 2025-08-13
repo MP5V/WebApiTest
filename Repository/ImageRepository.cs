@@ -12,11 +12,11 @@ namespace WebApiTest.Repository
     public class ImageRepository
     {
         private readonly string _imageFolderPath;
-        private readonly DataBaseConnection _db;
+        private readonly AppDbContext _context;
 
-        public ImageRepository()
+        public ImageRepository(AppDbContext context)
         {
-            _db = new DataBaseConnection();
+            _context = context;
             _imageFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "image");
             if (!Directory.Exists(_imageFolderPath))
                 Directory.CreateDirectory(_imageFolderPath);

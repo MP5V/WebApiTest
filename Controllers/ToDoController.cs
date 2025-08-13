@@ -11,9 +11,9 @@ namespace WebApiTest.Controllers
     {
         private readonly ToDoRepository _repository;
 
-        public ToDoController()
+        public ToDoController(ToDoRepository repository)
         {
-            _repository = new ToDoRepository();
+            _repository = repository;
         }
 
         [HttpGet]
@@ -24,11 +24,11 @@ namespace WebApiTest.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<ToDoItems> GetById(int id)
+        public async Task<ActionResult<ToDoItems>> GetById(int id)
         {
-            var item = _repository.GetById(id);
+            var item = await _repository.GetById(id);
             return item == null ? NotFound() : Ok(item);
-        }   
+        }
 
         [HttpPost]
         public async Task<ActionResult<ToDoItems>> Create(ToDoItems item)
@@ -40,10 +40,7 @@ namespace WebApiTest.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ToDoItems updatedItem)
         {
-            var item = _repository.GetById(id);
-            if (item == null) return NotFound();
-
-            updatedItem.Id = item.Id;
+            updatedItem.Id = id;
             await _repository.Update(updatedItem);
             return NoContent();
         }
@@ -51,10 +48,10 @@ namespace WebApiTest.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var item = _repository.GetById(id);
-            if (item == null) return NotFound();
+            var existingItem = await _repository.GetById(id);
+            if (existingItem == null) return NotFound();
 
-             await _repository.Delete(id);
+            await _repository.Delete(id);
             return NoContent();
         }
     }
